@@ -1,5 +1,5 @@
 import React, { useReducer } from 'react'
-
+import { useCreateTodoMutation } from '../state/todosApi'
 const CHANGE_LABEL = 'CHANGE_LABEL'
 const CHANGE_IS_COMPLETED = 'CHANGE_IS_COMPLETED'
 
@@ -20,7 +20,7 @@ const reducer = (state, action) => {
 
 export default function TodoForm() {
   const [state, dispatch] = useReducer(reducer, initialState)
-
+  const [createTodo, { error: createTodoError ,isLoading}] = useCreateTodoMutation()
   const onLabelChange = ({ target: { value } }) => {
     dispatch({ type: CHANGE_LABEL, payload: value })
   }
@@ -34,12 +34,20 @@ export default function TodoForm() {
 
   const onNewTodo = async evt => {
     evt.preventDefault()
+    const { todoLabel: label, todoIsCompleted: complete } = state
+    createTodo({ label, complete })
+      .unwrap()
+      .then(() => {
+        resetForm()
+      })
+      .catch(err => { })
+
   }
 
   return (
     <form id="todoForm" onSubmit={onNewTodo}>
-      <div className="error"></div>
-      <h3>New Todo Form</h3>
+      <div className="error">{createTodoError && createTodoError.data.message}</div>
+      <h3>New Todo {isLoading&&"being created"}</h3>
       <label><span>Todo label:</span>
         <input
           type='text'
